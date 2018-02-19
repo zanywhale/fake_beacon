@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <unistd.h>
 #include "attackBeacon.h"
 #include "networkInfo.h"
 
@@ -33,6 +34,7 @@ int main(int argc, char *argv[])
         for ( umapIter = ssidMap->begin(); umapIter != ssidMap->end(); umapIter++){
             umapIter->second->sendBeacon();
         }
+        usleep(10000);
     }
 
     return 0;
