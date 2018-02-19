@@ -4,5 +4,12 @@ CONFIG -= app_bundle
 CONFIG -= qt
 LIBS += -ltins
 LIBS += -pthread
+LIBS += -lpcap
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    attackBeacon.cpp \
+    networkInfo.cpp
+
+HEADERS += \
+    attackBeacon.h \
+    networkInfo.h
