@@ -27,10 +27,10 @@ void attackBeacon::makeBeacon()
     // Encryption: we'll say we use WPA2-psk encryption
     this->beacon.rsn_information(RSNInformation::wpa2_psk());
     // The beacon's ready to be sent!
+    this->tap.inner_pdu(beacon);
 }
 
 void attackBeacon::sendBeacon()
 {
-    this->tap.inner_pdu(beacon);
     this->sender.send(this->tap);
 }
